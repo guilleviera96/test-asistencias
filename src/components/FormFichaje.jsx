@@ -1,87 +1,105 @@
 import { useState } from "react";
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhnDZpP1lfEGGIa2PCSjXnI_zSCS1f1QAUhx1XMZXvQaDrzpEQm8RE2HNJAbhhBUpD/exec";
+const empleados = [
+  { id: "emp001", nombre: "Juan Pérez" },
+  { id: "emp002", nombre: "María Gómez" },
+  { id: "emp003", nombre: "Pedro Martínez" },
+];
 
-export default function FormFichaje() {
-  const [nombre, setNombre] = useState("");
-  const [apellido, setApellido] = useState("");
-  const [edificio, setEdificio] = useState("Edificio 1");
-  const [mensaje, setMensaje] = useState("");
+const edificios = ["Edificio 1", "Edificio 2"];
 
+export default function FormularioFichaje() {
+  const [empleadoId, setEmpleadoId] = useState("");
+  const [edificio, setEdificio] = useState(edificios[0]);
+
+  // Para enviar al Google Script
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!empleadoId) {
+      alert("Por favor seleccioná un empleado");
+      return;
+    }
 
-    const datos = { nombre, apellido, edificio };
+    const empleadoSeleccionado = empleados.find((e) => e.id === empleadoId);
+    if (!empleadoSeleccionado) {
+      alert("Empleado no válido");
+      return;
+    }
+
+    // Construir payload para enviar
+    const payload = new URLSearchParams({
+      nombre: empleadoSeleccionado.nombre.split(" ")[0],
+      apellido: empleadoSeleccionado.nombre.split(" ").slice(1).join(" "),
+      edificio,
+    });
 
     try {
-      await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams(datos).toString(),
-      });
-
-      setMensaje("✅ Asistencia enviada correctamente.");
-      setNombre("");
-      setApellido("");
-      setEdificio("Edificio 1");
+      const response = await fetch(
+        "https://script.google.com/macros/s/AKfycbzNg8BgmzTTYWJKhVjftjWTHWsG_dWYIyGj8V_0orpxeJOTtevzK-ZSO2VFAGLuvFBg/exec",
+        {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: payload.toString(),
+        }
+      );
+      alert("Asistencia enviada con éxito");
+      setEmpleadoId("");
+      setEdificio(edificios[0]);
     } catch (error) {
+      alert("Error enviando asistencia");
       console.error(error);
-      setMensaje("❌ Error al enviar la asistencia.");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-white p-6 rounded-xl shadow-md"
-      >
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
-          Fichar Asistencia
-        </h2>
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-md mx-auto p-4 border rounded space-y-4"
+    >
+      <h2 className="text-xl font-semibold mb-4">Fichar Asistencia</h2>
 
-        <input
-          type="text"
-          placeholder="Nombre"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+      <label className="block">
+        Empleado:
+        <select
+          value={empleadoId}
+          onChange={(e) => setEmpleadoId(e.target.value)}
+          className="w-full p-2 border rounded mt-1"
           required
-          className="w-full mb-4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        >
+          <option value="">-- Seleccioná un empleado --</option>
+          {empleados.map(({ id, nombre }) => (
+            <option key={id} value={id}>
+              {nombre}
+            </option>
+          ))}
+        </select>
+      </label>
 
-        <input
-          type="text"
-          placeholder="Apellido"
-          value={apellido}
-          onChange={(e) => setApellido(e.target.value)}
-          required
-          className="w-full mb-4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
+      <label className="block">
+        Edificio:
         <select
           value={edificio}
           onChange={(e) => setEdificio(e.target.value)}
+          className="w-full p-2 border rounded mt-1"
           required
-          className="w-full mb-4 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option>Edificio 1</option>
-          <option>Edificio 2</option>
+          {edificios.map((ed, i) => (
+            <option key={i} value={ed}>
+              {ed}
+            </option>
+          ))}
         </select>
+      </label>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-        >
-          Enviar Asistencia
-        </button>
-
-        {mensaje && (
-          <p className="mt-4 text-center text-green-600 font-medium">{mensaje}</p>
-        )}
-      </form>
-    </div>
+      <button
+        type="submit"
+        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+      >
+        Enviar
+      </button>
+    </form>
   );
 }
