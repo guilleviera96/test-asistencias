@@ -57,7 +57,7 @@ export default function FormularioFichaje() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-md mx-auto p-4 border rounded space-y-4"
+      className="max-w-md mx-auto p-4 border rounded space-y-4 m-4"
     >
       <h2 className="text-xl font-semibold mb-4">Fichar Asistencia</h2>
 
